@@ -17,9 +17,9 @@ function scheduleTable(schedules) {
         (schedule) => html`
           <tr>
             <td>
-              <a href="/schedules/${schedule.scheduleId}"
-                >${schedule.scheduleName}</a
-              >
+              <a href="/schedules/${schedule.scheduleId}">
+                ${schedule.scheduleName}
+              </a>
             </td>
             <td>${schedule.updatedAt}</td>
           </tr>
