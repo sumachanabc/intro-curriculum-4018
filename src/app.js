@@ -9,14 +9,15 @@ const { env } = require("hono/adapter");
 const { serveStatic } = require("@hono/node-server/serve-static");
 const { githubAuth } = require("@hono/oauth-providers/github");
 const { getIronSession } = require("iron-session");
-const { PrismaClient } = require('@prisma/client');
+const { PrismaClient } = require("@prisma/client");
 const layout = require("./layout");
 
-const prisma = new PrismaClient({ log: [ 'query' ] });
+const prisma = new PrismaClient({ log: ["query"] });
 
 const indexRouter = require("./routes/index");
 const loginRouter = require("./routes/login");
 const logoutRouter = require("./routes/logout");
+const scheduleRouter = require("./routes/schedules");
 
 const app = new Hono();
 
@@ -57,7 +58,7 @@ app.get("/auth/github", async (c) => {
   const data = {
     userId,
     username: session.user.login,
-  }
+  };
   await prisma.user.upsert({
     where: { userId },
     update: data,
@@ -71,6 +72,7 @@ app.get("/auth/github", async (c) => {
 app.route("/", indexRouter);
 app.route("/login", loginRouter);
 app.route("/logout", logoutRouter);
+app.route("/schedules", scheduleRouter);
 
 // 404 Not Found
 app.notFound((c) => {
