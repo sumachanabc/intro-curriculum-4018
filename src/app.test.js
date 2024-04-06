@@ -1,13 +1,24 @@
 "use strict";
+const { PrismaClient } = require("@prisma/client");
+const prisma = new PrismaClient({ log: ["query"] });
+
+const testUser = {
+  userId: 0,
+  username: "testuser",
+};
+
+function mockIronSession() {
+  const ironSession = require("iron-session");
+  jest.spyOn(ironSession, "getIronSession").mockReturnValue({
+    user: { login: testUser.username, id: testUser.userId },
+    save: jest.fn(),
+    destroy: jest.fn(),
+  });
+}
 
 describe("/login", () => {
   beforeAll(() => {
-    const ironSession = require("iron-session");
-    jest.spyOn(ironSession, "getIronSession").mockReturnValue({
-      user: { login: "testuser" },
-      save: jest.fn(),
-      destroy: jest.fn(),
-    });
+    mockIronSession();
   });
 
   afterAll(() => {
@@ -36,5 +47,53 @@ describe("/logout", () => {
     const res = await app.request("/logout");
     expect(res.headers.get("Location")).toBe("/");
     expect(res.status).toBe(302);
+  });
+});
+
+describe("/schedules", () => {
+  let scheduleId = "";
+  beforeAll(() => {
+    mockIronSession();
+  });
+
+  afterAll(async () => {
+    jest.restoreAllMocks();
+
+    // テストで作成したデータを削除
+    await prisma.candidate.deleteMany({ where: { scheduleId } });
+    await prisma.schedule.delete({ where: { scheduleId } });
+  });
+
+  test("予定が作成でき、表示される", async () => {
+    await prisma.user.upsert({
+      where: { userId: testUser.userId },
+      create: testUser,
+      update: testUser,
+    });
+
+    const app = require("./app");
+
+    const postRes = await app.request("/schedules", {
+      method: "POST",
+      body: new URLSearchParams({
+        scheduleName: "テスト予定1",
+        memo: "テストメモ1\r\nテストメモ2",
+        candidates: "テスト候補1\r\nテスト候補2\r\nテスト候補3",
+      }),
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    });
+
+    expect(postRes.headers.get("Location")).toMatch(/schedules/);
+    expect(postRes.status).toBe(302);
+
+    const createdSchedulePath = postRes.headers.get("Location");
+    scheduleId = createdSchedulePath.split("/schedules/")[1];
+
+    const res = await app.request(createdSchedulePath);
+    const body = await res.text();
+    // TODO 作成された予定と候補が表示されていることをテストする
+    expect(res.status).toBe(200);
   });
 });
