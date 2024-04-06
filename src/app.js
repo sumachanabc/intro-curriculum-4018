@@ -92,7 +92,6 @@ app.notFound((c) => {
 app.onError((error, c) => {
   const statusCode = error instanceof HTTPException ? error.status : 500;
   const { NODE_ENV } = env(c);
-  console.log(error);
   return c.html(
     layout(
       "Error",
