@@ -39,7 +39,7 @@ app.post("/", ensureAuthenticated(), async (c) => {
   const body = await c.req.parseBody();
 
   // 予定を登録
-  const schedule = await prisma.schedule.create({
+  const { scheduleId } = await prisma.schedule.create({
     data: {
       scheduleId: randomUUID(),
       scheduleName: body.scheduleName.slice(0, 255) || "（名称未設定）",
@@ -56,14 +56,14 @@ app.post("/", ensureAuthenticated(), async (c) => {
     .filter((s) => s !== "");
   const candidates = candidateNames.map((candidateName) => ({
     candidateName,
-    scheduleId: schedule.scheduleId,
+    scheduleId,
   }));
   await prisma.candidate.createMany({
     data: candidates,
   });
 
   // 作成した予定のページにリダイレクト
-  return c.redirect("/schedules/" + schedule.scheduleId);
+  return c.redirect("/schedules/" + scheduleId);
 });
 
 app.get("/:scheduleId", ensureAuthenticated(), async (c) => {

@@ -12,7 +12,7 @@ const { getIronSession } = require("iron-session");
 const { PrismaClient } = require("@prisma/client");
 const layout = require("./layout");
 
-const prisma = new PrismaClient({ log: ["query"] });
+const prisma = new PrismaClient({ log: [ "query" ] });
 
 const indexRouter = require("./routes/index");
 const loginRouter = require("./routes/login");
@@ -25,7 +25,7 @@ app.use(logger());
 app.use(serveStatic({ root: "./public" }));
 app.use(secureHeaders());
 
-// セッション管理をするためのミドルウェア
+// セッション管理用のミドルウェア
 app.use(async (c, next) => {
   const { SESSION_PASSWORD } = env(c);
   const session = await getIronSession(c.req.raw, c.res, {
